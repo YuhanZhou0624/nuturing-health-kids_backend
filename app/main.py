@@ -12,6 +12,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"message": "Hello from Azure!"}
 # 路由引入
 app.include_router(guideline.router)
 app.include_router(park.router)
