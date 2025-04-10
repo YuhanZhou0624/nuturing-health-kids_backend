@@ -78,4 +78,5 @@ jobs:
         with:
           app-name: 'healthy-kids-backend'
           slot-name: 'Production'
+          startup-command: 'gunicorn app.main:app --workers 1 --bind=0.0.0.0:$PORT'
           
