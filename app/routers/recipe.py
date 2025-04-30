@@ -36,10 +36,3 @@ def search_recipes(
 
     return query.all()
 
-#query by id extends for future build
-# @router.get("/api/recipes/{id}", response_model=RecipeOut)
-# def get_recipe_by_id(id: int, db: Session = Depends(get_db)):
-#     recipe = db.query(Recipe).filter(Recipe.id == id).first()
-#     if not recipe:
-#         raise HTTPException(status_code=404, detail="Recipe not found")
-#     return recipe
