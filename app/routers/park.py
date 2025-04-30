@@ -1,25 +1,19 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
-from app.db import get_db_connection
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import List
+from app.db import SessionLocal
+from app.models import Park
+from app.schemas import ParkOut
 
 router = APIRouter()
 
-@router.get("/api/parks")
-def get_parks(postcode: Optional[int] = Query(None)):
+def get_db():
+    db = SessionLocal()
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        yield db
+    finally:
+        db.close()
 
-        if postcode:
-            cursor.execute("SELECT * FROM melbourne_playgrounds WHERE postcode = ?", (postcode,))
-        else:
-            cursor.execute("SELECT * FROM melbourne_playgrounds")
-
-        rows = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]
-        conn.close()
-
-        return [dict(zip(columns, row)) for row in rows]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/api/parks", response_model=List[ParkOut])
+def get_all_parks(db: Session = Depends(get_db)):
+    return db.query(Park).all()

@@ -1,42 +1,17 @@
-# app/db.py
-import pyodbc
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # load .env
+load_dotenv()
 
-# get set up information from .env
-server = os.getenv("DB_SERVER")
-database = os.getenv("DB_NAME")
-username = os.getenv("DB_USER")
-password = os.getenv("DB_PASSWORD")
-driver = "{ODBC Driver 18 for SQL Server}"
+DATABASE_URL = os.getenv("DB_URL")
 
-# construct database connection str
-conn_str = (
-    f"DRIVER={driver};"
-    f"SERVER={server};"
-    f"DATABASE={database};"
-    f"UID={username};"
-    f"PWD={password};"
-    f"Encrypt=yes;"
-    f"TrustServerCertificate=no;"
-)
+# 创建数据库引擎
+engine = create_engine(DATABASE_URL)
 
-# test method for local test
-def test_connection():
-    try:
-        with pyodbc.connect(conn_str) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            print("✅ successfully connected！")
-    except Exception as e:
-        print("❌ failed：", e)
+# 创建 SessionLocal 类，用于依赖注入
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# call function for connecting database
-def get_db_connection():
-    return pyodbc.connect(conn_str)
-
-# test execute
-if __name__ == "__main__":
-    test_connection()
+# 声明基础类，用于继承定义 ORM 模型
+Base = declarative_base()

@@ -1,22 +1,22 @@
-from fastapi import APIRouter, HTTPException
-from app.db import get_db_connection
+# app/routers/guideline.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.db import SessionLocal
+from app.models import Guideline
+from app.schemas import GuidelineOut
 
 router = APIRouter()
 
-@router.get("/api/guidelines/{id}")
-def get_guideline_by_id(id: int):
+def get_db():
+    db = SessionLocal()
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM guidelines_summary WHERE id = ?", (id,))
-        row = cursor.fetchone()
-        conn.close()
+        yield db
+    finally:
+        db.close()
 
-        if row:
-            columns = [column[0] for column in cursor.description]
-            result = dict(zip(columns, row))
-            return result
-        else:
-            raise HTTPException(status_code=404, detail="Guideline not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/api/guidelines/{id}", response_model=GuidelineOut)
+def get_guideline_by_id(id: int, db: Session = Depends(get_db)):
+    guideline = db.query(Guideline).filter(Guideline.id == id).first()
+    if not guideline:
+        raise HTTPException(status_code=404, detail="Guideline not found")
+    return guideline

@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import guideline
 from app.routers import park
+from app.routers import recipe
+from app.routers import nutrition
 app = FastAPI()
 
 app.add_middleware(
@@ -18,3 +20,7 @@ def read_root():
 # 路由引入
 app.include_router(guideline.router)
 app.include_router(park.router)
+app.include_router(recipe.router)
+app.include_router(nutrition.router)
+
+print("nutrition routes:", nutrition.router.routes)
