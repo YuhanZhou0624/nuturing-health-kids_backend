@@ -14,6 +14,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 @app.get("/")
 def read_root():
     return {"message": "Hello from Azure!"}
@@ -22,5 +29,3 @@ app.include_router(guideline.router)
 app.include_router(park.router)
 app.include_router(recipe.router)
 app.include_router(nutrition.router)
-
-print("nutrition routes:", nutrition.router.routes)
