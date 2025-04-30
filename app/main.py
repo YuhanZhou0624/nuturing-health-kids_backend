@@ -14,12 +14,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(dotenv_path)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+print("✅ DATABASE_URL loaded:", os.getenv("DATABASE_URL"))
 
 @app.get("/")
 def read_root():
