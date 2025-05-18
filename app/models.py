@@ -47,3 +47,16 @@ class NutritionGuideline(Base):
     protein = Column(String(7), nullable=False)
     dairy = Column(String(5), nullable=False)
 
+
+class SwapFoodQuiz(Base):
+    __tablename__ = "Game"
+
+    Round = Column(String, primary_key=True)
+    Option_1 = Column(String)
+    Option_2 = Column(String)
+    Option_3 = Column(String)
+    Answer = Column(String)
+    Why = Column(String)
+    image_1 = Column(String)
+    image_2 = Column(String)
+    image_3 = Column(String)

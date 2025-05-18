@@ -37,5 +37,16 @@ class NutritionGuidelineOut(BaseModel):
     protein: str
     dairy: str
 
+class SwapFoodQuizOut(BaseModel):
+    Round: str
+    Option_1: str
+    Option_2: str
+    Option_3: str
+    Answer: str
+    Why: str
+    image_1: str
+    image_2: str
+    image_3: str
+
     class Config:
         from_attributes = True
