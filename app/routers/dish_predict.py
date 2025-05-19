@@ -1,61 +1,73 @@
+# app/routers/dish_predict.py
 from fastapi import APIRouter, UploadFile, File, Request
 from fastapi.responses import JSONResponse
-import os, shutil, asyncio
+from dotenv import load_dotenv
 from openai import OpenAI
+from app.schemas import DishPrediction
+import os, shutil, base64, json, re, traceback
 
 router = APIRouter()
+load_dotenv()
 
-# Directory to temporarily store uploaded files
-TEMP_DIR = "static"
+TEMP_DIR = "temp_uploads"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-# Initialize OpenAI client for Doubao API
-client = OpenAI(
-    base_url="https://ark.cn-beijing.volces.com/api/v3",
-    api_key=os.environ.get("ARK_API_KEY"),  # Ensure this environment variable is set
-)
+# Initialize OpenAI client
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
 @router.post("/dish/predict")
 async def predict_dish(file: UploadFile = File(...), request: Request = None):
-    # Save the uploaded image to temp folder
-    filename = file.filename
-    save_path = os.path.join(TEMP_DIR, filename)
-    with open(save_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    # Generate image URL (for local testing or Render deployment)
-    scheme = request.url.scheme
-    host = request.client.host if "127" in request.client.host else request.base_url.hostname
-    port = request.url.port
-    image_url = f"https://nuturing-health-kids-backend-1.onrender.com/static/{filename}"  # For Render deployment
-
-    await asyncio.sleep(5)
-
-    # Call Doubao API to analyze the image
-    response = client.chat.completions.create(
-        model="doubao-1.5-vision-pro-250328",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": { "url": image_url }
-                    },
-                    {
-                        "type": "text",
-                        "text": "Identify the dish in this image and return the result in this format: {'predicted_dish': 'xxx', 'ingredients': [...], 'steps': [...]}"
-                    }
-                ],
-            }
-        ],
-    )
-
-    content = response.choices[0].message.content
-
-    # Try to parse the output
     try:
-        result = eval(content) if isinstance(content, str) else content
-    except:
-        return JSONResponse(status_code=500, content={"error": "Failed to parse model response", "raw": content})
+        # Step 1: Save uploaded image
+        filename = file.filename
+        ext = os.path.splitext(filename)[-1].lower()
+        save_path = os.path.join(TEMP_DIR, filename)
+        with open(save_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
 
-    return result
+        # Step 2: Read image & convert to base64
+        with open(save_path, "rb") as f:
+            image_bytes = f.read()
+            image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+        # Step 3: Send to OpenAI GPT-4o
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/{ext[1:]};base64,{image_base64}"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": (
+                                "This is a photo of a dish. Please identify the dish name, ingredients, and cooking steps. "
+                                "Respond ONLY in this JSON format: "
+                                "{\"dish\": ..., \"ingredients\": [...], \"steps\": [...]} — Do not include explanation or markdown."
+                            )
+                        }
+                    ]
+                }
+            ]
+        )
+
+        # Step 4: Clean & parse GPT output
+        raw_text = response.choices[0].message.content or ""
+        match = re.search(r"\{.*\}", raw_text, re.DOTALL)
+        if not match:
+            raise ValueError("No valid JSON object found in model response.")
+
+        json_str = match.group()
+        structured = DishPrediction.model_validate(json.loads(json_str))
+
+        # Step 5: Return parsed result
+        return JSONResponse(content=structured.model_dump())
+
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"error": str(e)})

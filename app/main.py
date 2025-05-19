@@ -26,6 +26,4 @@ app.include_router(recipe.router)
 app.include_router(nutrition.router)
 app.include_router(swapfood.router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 app.include_router(dish_predict.router)

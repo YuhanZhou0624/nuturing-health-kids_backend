@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class ParkOut(BaseModel):
     id: int
@@ -47,6 +48,11 @@ class SwapFoodQuizOut(BaseModel):
     image_1: str
     image_2: str
     image_3: str
+
+class DishPrediction(BaseModel):
+    dish: str
+    ingredients: List[str]
+    steps: List[str]
 
     class Config:
         from_attributes = True
