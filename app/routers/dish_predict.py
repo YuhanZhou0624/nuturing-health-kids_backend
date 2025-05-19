@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Request
 from fastapi.responses import JSONResponse
-import os, shutil
+import os, shutil, asyncio
 from openai import OpenAI
 
 router = APIRouter()
@@ -27,6 +27,8 @@ async def predict_dish(file: UploadFile = File(...), request: Request = None):
     host = request.client.host if "127" in request.client.host else request.base_url.hostname
     port = request.url.port
     image_url = f"https://nuturing-health-kids-backend-1.onrender.com/static/{filename}"  # For Render deployment
+
+    await asyncio.sleep(5)
 
     # Call Doubao API to analyze the image
     response = client.chat.completions.create(
