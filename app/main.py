@@ -4,6 +4,8 @@ from app.routers import guideline, swapfood
 from app.routers import park
 from app.routers import recipe
 from app.routers import nutrition
+from fastapi.staticfiles import StaticFiles
+from app.routers import dish_predict
 app = FastAPI()
 
 app.add_middleware(
@@ -23,3 +25,7 @@ app.include_router(park.router)
 app.include_router(recipe.router)
 app.include_router(nutrition.router)
 app.include_router(swapfood.router)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.include_router(dish_predict.router)
